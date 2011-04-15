@@ -1,5 +1,5 @@
 ;;; musicbrainz.el --- musicbrainz interface
-;; Copyright (C) 1998, 2002, 2011 Lars Magne Ingebrigtsen
+;; Copyright (C) 2011 Lars Magne Ingebrigtsen
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: music
