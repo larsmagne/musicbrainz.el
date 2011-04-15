@@ -23,10 +23,49 @@
 
 ;;; Commentary:
 
+;; This library queries the musicbrainz.org data base and coverts the
+;; entries into cddb form.  Submission hasn't been implemented (yet).
+
 ;;; Code:
 
 (require 'cl)
 (require 'message)
+(require 'url)
+
+(defun musicbrainz-query (discid)
+  (let ((buffer
+	 (url-retrieve-synchronously
+	  (format "http://musicbrainz.org/ws/1/release/?discid=%s&type=xml"
+		  discid))))
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+	(goto-char (point-min))
+	(when (search-forward "\n\n" nil t)
+	  (xml-parse-region (point) (point-max)))))))
+
+(defun musicbrainz-to-cddb (xml)
+  (let ((release (cdr (nth 2 (nth 2 (car xml)))))
+	track-names frames
+	(start-frame 150))
+    (dolist (track (nthcdr 2 (assq 'track-list release)))
+      (push (nth 2 (assq 'title track)) track-names)
+      (push start-frame frames)
+      (setq start-frame
+	    (+ start-frame
+	       (round
+		(/ (string-to-number (nth 2 (assq 'duration track)))
+		   13.3333)))))
+    (list
+     (cons 'frames (nreverse frames))
+     (cons 'tracks (nreverse track-names))
+     (cons 'artist (nth 2 (assq 'name (cdr (assq 'artist release)))))
+     (cons 'title (nth 2 (assq 'title release)))
+     (cons 'length (/ start-frame 75))
+     (cons 'year (substring
+		  (cdr
+		   (assq 'date (cadr
+				(nth 2 (assq 'release-event-list release)))))
+		  0 4)))))
 
 (provide 'musicbrainz)
 
