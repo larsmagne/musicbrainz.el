@@ -114,25 +114,21 @@
 	       (mapconcat #'number-to-string (cdr (assq 'toc toc)) " "))
 	      (cdr (assq 'id toc))))
 	(artist (cdr (assq 'artist cddb-entry)))
-	(i 0))
+	(i 0)
+	elem)
     (unless (equal artist "Various")
       (setq url (concat url "&artist=" (musicbrainz-encode artist))))
     (dolist (track (cdr (assq 'tracks cddb-entry)))
-      (if (equal artist "Various")
-	  (let ((elem (split-string track " - ")))
-	    (if (> (length elem) 1)
-		(setq url
-		      (concat
-		       url (format "&track%d=%s&artist%d=%s"
-				   i
-				   (musicbrainz-encode (cadr elem))
-				   i
-				   (musicbrainz-encode (car elem)))))
-	      (setq url (concat url (format "&track%d=%s"
-					    i
-					    (musicbrainz-encode track))))))
-	(setq url (concat url (format "&track%d=%s"
-				      i (musicbrainz-encode track)))))
+      (setq url
+	    (concat
+	     url
+	     (if (and (equal artist "Various")
+		      (> (length (setq elem (split-string track " - "))) 1))
+		 (format "&track%d=%s&artist%d=%s"
+			 i (musicbrainz-encode (cadr elem))
+			 i (musicbrainz-encode (car elem)))
+	       (format "&track%d=%s"
+		       i (musicbrainz-encode track)))))
       (incf i))
     (let* ((url-request-method "POST")
 	   (url-request-extra-headers '(("Content-length" . "0")))
