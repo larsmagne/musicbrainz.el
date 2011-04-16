@@ -70,7 +70,7 @@
 				(nth 2 (assq 'release-event-list release)))))
 		  0 4)))))
 
-(defun musicbrainz-get-toc-with-discid (&optional cdrom)
+(defun musicbrainz-toc (&optional cdrom)
   "Get the Table Of Contents by using the cd-discid extenal command."
   (let ((output (shell-command-to-string
 		 (format "cd-discid --musicbrainz %s"
@@ -79,7 +79,7 @@
 	(error "No output from cd-discid")
       (mapcar #'string-to-number (split-string output)))))
 
-(defun musicbrainz-compute-discid (toc)
+(defun musicbrainz-discid (toc)
   (setq toc (copy-list toc))
   (with-temp-buffer
     (insert (format "%02X%02X%08X" 1 (pop toc) (car (last toc))))
