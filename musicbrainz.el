@@ -78,16 +78,19 @@
     (if (not output)
 	(error "No output from cd-discid")
       (let ((toc (mapcar #'string-to-number (split-string output))))
+	;; Rejuggle the order, so that it corresponds to what we're
+	;; expecting.
+	(setcdr toc (cons (car (last toc)) (cdr toc)))
+	(setcdr (last toc 2) nil)
+	(push 1 toc)
 	(list (cons 'toc toc)
-	      (cons 'id (musicbrainz-discic toc)))))))
+	      (cons 'id (musicbrainz-discid toc)))))))
 
 (defun musicbrainz-discid (toc)
   (setq toc (copy-list toc))
   (with-temp-buffer
-    (insert (format "%02X%02X%08X" 1 (pop toc) (car (last toc))))
-    ;; Chop off the lead-out frame.
-    (setcdr (last toc 2) nil)
-    (dotimes (i 99)
+    (insert (format "%02X%02X" (pop toc) (pop toc)))
+    (dotimes (i 100)
       (insert (format "%08X" (or (pop toc) 0))))
     (subst-char-in-string
      ?+ ?.
@@ -96,6 +99,37 @@
       (subst-char-in-string
        ?= ?-
        (base64-encode-string (sha1 (buffer-string) nil nil t)))))))
+
+(defun musicbrainz-possibly-submit (toc cddb-entry)
+  "If TOC doesn't exist on MusicBrains, then submit CDDB-ENTRY."
+  (unless (musicbrainz-query (cdr (assq 'id toc)))
+    (musicbrainz-submit toc cddb-entry)))
+
+(defun musicbrainz-submit (toc cddb-entry)
+  (let ((url (format
+	      "http://test.musicbrainz.org/ws/1/release/?client=musicbrainz.el&title=%s&toc=%s&discid=%s"
+	      (cdr (assq 'title cddb-entry))
+	      (mapconcat #'number-to-string (cdr (assq 'toc toc)) " ")
+	      (cdr (assq 'id toc))))
+	(artist (cdr (assq 'artist cddb-entry)))
+	(i 0))
+    (unless (equal artist "Various")
+      (setq url (concat url "&artist=" artist)))
+    (dolist (track (cdr (assq 'tracks cddb-entry)))
+      (if (equal artist "Various")
+	  (let ((elem (split-string track " - ")))
+	    (if (> (length elem) 1)
+		(setq url
+		      (concat url (format "&track%d=%s&artist%d=%s"
+					  i (cadr elem) i (car elem))))
+	      (setq url (concat url (format "&track%d=%s"
+					    i track)))))
+	(setq url (concat url (format "&track%d=%s"
+				      i track))))
+      (incf i))
+    (let* ((url-request-method "PUT")
+	   (buffer (url-retrieve-synchronously url)))
+      (buffer-string))))
 
 (provide 'musicbrainz)
 
