@@ -107,7 +107,7 @@
 
 (defun musicbrainz-submit (toc cddb-entry)
   (let ((url (format
-	      "http://test.musicbrainz.org/ws/1/release/?client=musicbrainz.el-1.0&title=%s&toc=%s&discid=%s"
+	      "http://musicbrainz.org/ws/1/release/?client=musicbrainz.el-1.0&title=%s&toc=%s&discid=%s"
 	      (mm-url-form-encode-xwfu
 	       (cdr (assq 'title cddb-entry)))
 	      (mm-url-form-encode-xwfu
@@ -134,7 +134,7 @@
 	(setq url (concat url (format "&track%d=%s"
 				      i (mm-url-form-encode-xwfu track)))))
       (incf i))
-    (let* ((url-request-method "PUT")
+    (let* ((url-request-method "POST")
 	   (url-request-extra-headers '(("Content-length" . "0")))
 	   (buffer (url-retrieve-synchronously url)))
       (with-current-buffer buffer
