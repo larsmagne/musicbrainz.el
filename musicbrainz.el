@@ -77,7 +77,9 @@
 			 (or cdrom musicbrainz-cdrom)))))
     (if (not output)
 	(error "No output from cd-discid")
-      (mapcar #'string-to-number (split-string output)))))
+      (let ((toc (mapcar #'string-to-number (split-string output))))
+	(list (cons 'toc toc)
+	      (cons 'id (musicbrainz-discic toc)))))))
 
 (defun musicbrainz-discid (toc)
   (setq toc (copy-list toc))
