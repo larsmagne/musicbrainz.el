@@ -31,6 +31,7 @@
 (require 'cl)
 (require 'message)
 (require 'url)
+(require 'mm-url)
 
 (defvar musicbrainz-cdrom "/dev/scd0"
   "The device name to be given to the cd-discid program.")
@@ -108,28 +109,37 @@
 (defun musicbrainz-submit (toc cddb-entry)
   (let ((url (format
 	      "http://test.musicbrainz.org/ws/1/release/?client=musicbrainz.el&title=%s&toc=%s&discid=%s"
-	      (cdr (assq 'title cddb-entry))
-	      (mapconcat #'number-to-string (cdr (assq 'toc toc)) " ")
+	      (mm-url-form-encode-xwfu
+	       (cdr (assq 'title cddb-entry)))
+	      (mm-url-form-encode-xwfu
+	       (mapconcat #'number-to-string (cdr (assq 'toc toc)) " "))
 	      (cdr (assq 'id toc))))
 	(artist (cdr (assq 'artist cddb-entry)))
 	(i 0))
     (unless (equal artist "Various")
-      (setq url (concat url "&artist=" artist)))
+      (setq url (concat url "&artist=" (mm-url-form-encode-xwfu artist))))
     (dolist (track (cdr (assq 'tracks cddb-entry)))
       (if (equal artist "Various")
 	  (let ((elem (split-string track " - ")))
 	    (if (> (length elem) 1)
 		(setq url
-		      (concat url (format "&track%d=%s&artist%d=%s"
-					  i (cadr elem) i (car elem))))
+		      (concat
+		       url (format "&track%d=%s&artist%d=%s"
+				   i
+				   (mm-url-form-encode-xwfu (cadr elem))
+				   i
+				   (mm-url-form-encode-xwfu (car elem)))))
 	      (setq url (concat url (format "&track%d=%s"
-					    i track)))))
+					    i
+					    (mm-url-form-encode-xwfu track))))))
 	(setq url (concat url (format "&track%d=%s"
-				      i track))))
+				      i (mm-url-form-encode-xwfu track)))))
       (incf i))
     (let* ((url-request-method "PUT")
+	   (url-request-extra-headers '(("Content-length" . "0")))
 	   (buffer (url-retrieve-synchronously url)))
-      (buffer-string))))
+      (with-current-buffer buffer
+	(buffer-string)))))
 
 (provide 'musicbrainz)
 
