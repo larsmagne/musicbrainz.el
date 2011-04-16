@@ -23,8 +23,8 @@
 
 ;;; Commentary:
 
-;; This library queries the musicbrainz.org data base and coverts the
-;; entries into cddb form.  Submission hasn't been implemented (yet).
+;; This library queries the musicbrainz.org data base and converts the
+;; entries into cddb form.
 
 ;;; Code:
 
