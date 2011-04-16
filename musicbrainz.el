@@ -88,7 +88,6 @@
 	      (cons 'id (musicbrainz-discid toc)))))))
 
 (defun musicbrainz-discid (toc)
-  (setq toc (copy-list toc))
   (with-temp-buffer
     (insert (format "%02X%02X" (pop toc) (pop toc)))
     (dotimes (i 100)
@@ -108,7 +107,7 @@
 
 (defun musicbrainz-submit (toc cddb-entry)
   (let ((url (format
-	      "http://test.musicbrainz.org/ws/1/release/?client=musicbrainz.el&title=%s&toc=%s&discid=%s"
+	      "http://test.musicbrainz.org/ws/1/release/?client=musicbrainz.el-1.0&title=%s&toc=%s&discid=%s"
 	      (mm-url-form-encode-xwfu
 	       (cdr (assq 'title cddb-entry)))
 	      (mm-url-form-encode-xwfu
