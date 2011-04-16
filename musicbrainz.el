@@ -32,6 +32,9 @@
 (require 'message)
 (require 'url)
 
+(defvar musicbrainz-cdrom "/dev/scd0"
+  "The device name to be given to the cd-discid program.")
+
 (defun musicbrainz-query (discid)
   (let ((buffer
 	 (url-retrieve-synchronously
@@ -66,6 +69,31 @@
 		   (assq 'date (cadr
 				(nth 2 (assq 'release-event-list release)))))
 		  0 4)))))
+
+(defun musicbrainz-get-toc-with-discid (&optional cdrom)
+  "Get the Table Of Contents by using the cd-discid extenal command."
+  (let ((output (shell-command-to-string
+		 (format "cd-discid --musicbrainz %s"
+			 (or cdrom musicbrainz-cdrom)))))
+    (if (not output)
+	(error "No output from cd-discid")
+      (mapcar #'string-to-number (split-string output)))))
+
+(defun musicbrainz-compute-discid (toc)
+  (setq toc (copy-list toc))
+  (with-temp-buffer
+    (insert (format "%02X%02X%08X" 1 (pop toc) (car (last toc))))
+    ;; Chop off the lead-out frame.
+    (setcdr (last toc 2) nil)
+    (dotimes (i 99)
+      (insert (format "%08X" (or (pop toc) 0))))
+    (subst-char-in-string
+     ?+ ?.
+     (subst-char-in-string
+      ?/ ?_
+      (subst-char-in-string
+       ?= ?-
+       (base64-encode-string (sha1 (buffer-string) nil nil t)))))))
 
 (provide 'musicbrainz)
 
