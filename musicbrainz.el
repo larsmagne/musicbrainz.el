@@ -47,29 +47,41 @@
 	(when (search-forward "\n\n" nil t)
 	  (xml-parse-region (point) (point-max)))))))
 
+(defun musicbrainz-search (artist title)
+  (let ((buffer
+	 (url-retrieve-synchronously
+	  (format "http://musicbrainz.org/ws/1/release/?artist=%s&title=%s&type=xml&inc=tracks"
+		  artist title))))
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+	(goto-char (point-min))
+	(when (search-forward "\n\n" nil t)
+	  (xml-parse-region (point) (point-max)))))))
+
 (defun musicbrainz-to-cddb (xml)
   (let ((release (cdr (nth 2 (nth 2 (car xml)))))
 	track-names frames
 	(start-frame 150))
-    (dolist (track (nthcdr 2 (assq 'track-list release)))
-      (push (nth 2 (assq 'title track)) track-names)
-      (push start-frame frames)
-      (setq start-frame
-	    (+ start-frame
-	       (round
-		(/ (string-to-number (nth 2 (assq 'duration track)))
-		   13.3333)))))
-    (list
-     (cons 'frames (nreverse frames))
-     (cons 'tracks (nreverse track-names))
-     (cons 'artist (nth 2 (assq 'name (cdr (assq 'artist release)))))
-     (cons 'title (nth 2 (assq 'title release)))
-     (cons 'length (/ start-frame 75))
-     (cons 'year (substring
-		  (cdr
-		   (assq 'date (cadr
-				(nth 2 (assq 'release-event-list release)))))
-		  0 4)))))
+    (when release
+      (dolist (track (nthcdr 2 (assq 'track-list release)))
+	(push (nth 2 (assq 'title track)) track-names)
+	(push start-frame frames)
+	(setq start-frame
+	      (+ start-frame
+		 (round
+		  (/ (string-to-number (nth 2 (assq 'duration track)))
+		     13.3333)))))
+      (list
+       (cons 'frames (nreverse frames))
+       (cons 'tracks (nreverse track-names))
+       (cons 'artist (nth 2 (assq 'name (cdr (assq 'artist release)))))
+       (cons 'title (nth 2 (assq 'title release)))
+       (cons 'length (/ start-frame 75))
+       (cons 'year (substring		;
+		    (cdr
+		     (assq 'date (cadr
+				  (nth 2 (assq 'release-event-list release)))))
+		    0 4))))))
 
 (defun musicbrainz-toc (&optional cdrom)
   "Get the Table Of Contents by using the cd-discid extenal command."
