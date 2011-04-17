@@ -45,7 +45,9 @@
       (with-current-buffer buffer
 	(goto-char (point-min))
 	(when (search-forward "\n\n" nil t)
-	  (xml-parse-region (point) (point-max)))))))
+	  (let ((xml (xml-parse-region (point) (point-max))))
+	    (and (cdr (nth 2 (nth 2 (car xml))))
+		 xml)))))))
 
 (defun musicbrainz-search (artist title)
   (let ((buffer
