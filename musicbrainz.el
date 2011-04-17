@@ -46,6 +46,7 @@
 	(goto-char (point-min))
 	(when (search-forward "\n\n" nil t)
 	  (let ((xml (xml-parse-region (point) (point-max))))
+	    (kill-buffer buffer)
 	    (and (cdr (nth 2 (nth 2 (car xml))))
 		 xml)))))))
 
@@ -61,12 +62,16 @@
 	  (xml-parse-region (point) (point-max)))))))
 
 (defun musicbrainz-to-cddb (xml)
-  (let ((release (cdr (nth 2 (nth 2 (car xml)))))
-	track-names frames
-	(start-frame 150))
+  (let* ((release (cdr (nth 2 (nth 2 (car xml)))))
+	 (date (cdr
+		(assq 'date (cadr
+			     (nth 2 (assq 'release-event-list release))))))
+	 track-names frames
+	 (start-frame 150))
     (when release
       (dolist (track (nthcdr 2 (assq 'track-list release)))
-	(push (nth 2 (assq 'title track)) track-names)
+	(push (decode-coding-string (nth 2 (assq 'title track)) 'utf-8)
+	      track-names)
 	(push start-frame frames)
 	(setq start-frame
 	      (+ start-frame
@@ -76,14 +81,15 @@
       (list
        (cons 'frames (nreverse frames))
        (cons 'tracks (nreverse track-names))
-       (cons 'artist (nth 2 (assq 'name (cdr (assq 'artist release)))))
-       (cons 'title (nth 2 (assq 'title release)))
+       (cons 'artist (decode-coding-string
+		      (nth 2 (assq 'name (cdr (assq 'artist release))))
+		      'utf-8))
+       (cons 'title (decode-coding-string
+		     (nth 2 (assq 'title release))
+		     'utf-8))
        (cons 'length (/ start-frame 75))
-       (cons 'year (substring		;
-		    (cdr
-		     (assq 'date (cadr
-				  (nth 2 (assq 'release-event-list release)))))
-		    0 4))))))
+       (cons 'year (and date
+			(substring date 0 4)))))))
 
 (defun musicbrainz-toc (&optional cdrom)
   "Get the Table Of Contents by using the cd-discid extenal command."
