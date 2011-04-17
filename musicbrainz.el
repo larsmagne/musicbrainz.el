@@ -154,7 +154,9 @@
 	   (url-request-extra-headers '(("Content-length" . "0")))
 	   (buffer (url-retrieve-synchronously url)))
       (with-current-buffer buffer
-	(buffer-string)))))
+	(prog1
+	    (buffer-string)
+	  (kill-buffer buffer))))))
 
 (defun musicbrainz-encode (string)
   (mm-url-form-encode-xwfu (encode-coding-string string 'utf-8)))
