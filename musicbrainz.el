@@ -76,9 +76,10 @@
 	(setq start-frame
 	      (+ start-frame
 		 (round
-		  (/ (string-to-number (nth 2 (assq 'duration track)))
+		  (/ (string-to-number (or (nth 2 (assq 'duration track)) "0"))
 		     13.3333)))))
       (list
+       (cons 'id "")
        (cons 'frames (nreverse frames))
        (cons 'tracks (nreverse track-names))
        (cons 'artist (decode-coding-string
