@@ -150,7 +150,7 @@
 			 i (musicbrainz-encode (car elem)))
 	       (format "&track%d=%s"
 		       i (musicbrainz-encode track)))))
-      (incf i))
+      (cl-incf i))
     (let* ((url-request-method "POST")
 	   (url-request-extra-headers '(("Content-length" . "0")))
 	   (buffer (url-retrieve-synchronously url)))
