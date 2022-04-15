@@ -83,7 +83,7 @@
        (cons 'frames (nreverse frames))
        (cons 'tracks (nreverse track-names))
        (cons 'artist (decode-coding-string
-		      (nth 2 (assq 'name (cdr (assq 'artist release))))
+		      (or (nth 2 (assq 'name (cdr (assq 'artist release)))) "")
 		      'utf-8))
        (cons 'title (decode-coding-string
 		     (nth 2 (assq 'title release))
