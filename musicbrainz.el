@@ -28,7 +28,6 @@
 
 ;;; Code:
 
-(require 'cl)
 (require 'message)
 (require 'url)
 (require 'mm-url)
